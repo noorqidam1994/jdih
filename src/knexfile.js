@@ -21,11 +21,11 @@ export const development = {
   debug: false,
   useNullAsDefault: true,
   connection: {
-    host: "localhost",
-    user: "root",
-    password: "Batara48", //process.env.DB_PASSWORD
-    database: "jdih",
-    port: "3306",
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USERNAME || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_DATABASE || "jdih",
+    port: process.env.DB_PORT || "3306",
     charset: "utf8",
   },
   pool: {
