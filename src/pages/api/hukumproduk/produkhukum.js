@@ -5,8 +5,13 @@ import connectionHandler from '../../../lib/connection-handler';
 const handler = async (req, res) => {
   try {
     if (req.method === 'POST') {
-      let sql_x, tentang, tentangHaving, orderUrut, jns, thn, terx, status, statusUji, length = parseInt(req.body.length), start = parseInt(req.body.start);
-      let cariPch = req.body.tentang.split('%20').join(' ').split('#').join('');
+      // Validate request body
+      if (!req.body) {
+        return res.status(400).json({ error: 'Request body is required' });
+      }
+      
+      let sql_x, tentang, tentangHaving, orderUrut, jns, thn, terx, status, statusUji, length = parseInt(req.body.length) || 10, start = parseInt(req.body.start) || 0;
+      let cariPch = req.body.tentang ? req.body.tentang.split('%20').join(' ').split('#').join('') : '';
 
       if(cariPch !== "") {
       let qry = cariPch.trim();
@@ -70,23 +75,23 @@ const handler = async (req, res) => {
       sql_x = '';
     }
 
-    if (req.body.jns.length !== 0) {
+    if (req.body.jns && Array.isArray(req.body.jns) && req.body.jns.length !== 0) {
       const inClauseJns = req.body.jns.map(j => `'${j}'`).join(', ');
       jns = `b.jns IN (` + inClauseJns + `)`;
     } else { jns = ''; }
-    if (req.body.thn.length !== 0) {
+    if (req.body.thn && Array.isArray(req.body.thn) && req.body.thn.length !== 0) {
       const inClauseThn = req.body.thn.map(t => `'${t}'`).join(', ');
       thn = `a.tahun IN (` + inClauseThn + `)`;
     } else { thn = ''; }
   
-    if (req.body.status !== '' && req.body.status === 'Uji_Materil') { statusUji = `INNER JOIN uji_materi u ON u.idperaturan=a.idperaturan`; } else { statusUji = ''; }
-    if (req.body.status !== '' && req.body.status === 'Dicabut') { status = `a.dicabut != ''`; }
-    else if (req.body.status !== '' && req.body.status === 'Diubah') { status = `a.diubah != ''`; }
-    else if (req.body.status !== '' && req.body.status === 'Mencabut') { status = `a.mencabut != ''`; }
-    else if (req.body.status !== '' && req.body.status === 'Mengubah') { status = `a.mengubah != ''`; }
+    if (req.body.status && req.body.status !== '' && req.body.status === 'Uji_Materil') { statusUji = `INNER JOIN uji_materi u ON u.idperaturan=a.idperaturan`; } else { statusUji = ''; }
+    if (req.body.status && req.body.status !== '' && req.body.status === 'Dicabut') { status = `a.dicabut != ''`; }
+    else if (req.body.status && req.body.status !== '' && req.body.status === 'Diubah') { status = `a.diubah != ''`; }
+    else if (req.body.status && req.body.status !== '' && req.body.status === 'Mencabut') { status = `a.mencabut != ''`; }
+    else if (req.body.status && req.body.status !== '' && req.body.status === 'Mengubah') { status = `a.mengubah != ''`; }
     else { status = ''; }
   
-    if (cariPch !== '' && req.body.p_lihan === 'semua' && req.body.terx === 'Terbaru') {
+    if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'semua' && req.body.terx && req.body.terx === 'Terbaru') {
       let spaceCount = (cariPch.split(" ").length - 1), jorder;
       if (spaceCount > 0) {
         jorder = `relevance desc, a.tgl_publish desc, a.tahun desc, b.idjenis, ABS(a.no_peraturan) desc, a.idperaturan desc`;
@@ -97,7 +102,7 @@ const handler = async (req, res) => {
       orderUrut = jorder;
       tentang = '';
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'tentang' && req.body.terx === 'Terbaru') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'tentang' && req.body.terx && req.body.terx === 'Terbaru') {
       let spaceCount = (cariPch.split(" ").length - 1), jorder;
       if (spaceCount > 0) {
         jorder = `relevance desc, a.tgl_publish desc, a.tahun desc, b.idjenis, ABS(a.no_peraturan) desc, a.idperaturan desc`;
@@ -108,16 +113,16 @@ const handler = async (req, res) => {
       orderUrut = jorder;
       tentang = '';
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'nomor' && req.body.terx === 'Terbaru') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'nomor' && req.body.terx && req.body.terx === 'Terbaru') {
       tentangHaving = `relevance > 0`;
-      orderUrut = `relevance desc, a.tgl_publish desc, a.tahun desc, , b.idjenis, ABS(a.no_peraturan) desc, a.idperaturan desc`;
+      orderUrut = `relevance desc, a.tgl_publish desc, a.tahun desc, b.idjenis, ABS(a.no_peraturan) desc, a.idperaturan desc`;
     }
-    else if (cariPch === '' && req.body.terx === 'Terbaru') {
+    else if (cariPch === '' && req.body.terx && req.body.terx === 'Terbaru') {
       tentangHaving = '';
       tentang = '';
       orderUrut = `a.tgl_publish desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'semua' && req.body.terx === 'Terpopuler') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'semua' && req.body.terx && req.body.terx === 'Terpopuler') {
       let spaceCount = (cariPch.split(" ").length - 1), jorder;
       if (spaceCount > 0) {
         jorder = `relevance desc, Lihat desc, a.tgl_publish desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
@@ -128,7 +133,7 @@ const handler = async (req, res) => {
       orderUrut = jorder;
       tentang = '';
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'tentang' && req.body.terx === 'Terpopuler') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'tentang' && req.body.terx && req.body.terx === 'Terpopuler') {
       let spaceCount = (cariPch.split(" ").length - 1), jorder;
       if (spaceCount > 0) {
         jorder = `relevance desc, Lihat desc, a.tgl_publish desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
@@ -139,16 +144,16 @@ const handler = async (req, res) => {
       orderUrut = jorder;
       tentang = '';
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'nomor' && req.body.terx === 'Terpopuler') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'nomor' && req.body.terx && req.body.terx === 'Terpopuler') {
       tentangHaving = `relevance > 0`;
       orderUrut = `relevance desc, Lihat desc, a.tgl_publish desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
     }
-    else if (cariPch === '' && req.body.terx === 'Terpopuler') {
+    else if (cariPch === '' && req.body.terx && req.body.terx === 'Terpopuler') {
       tentangHaving = '';
       tentang = '';
       orderUrut = `Lihat desc, a.tgl_publish desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'semua' && req.body.terx === 'All') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'semua' && req.body.terx && req.body.terx === 'All') {
       let spaceCount = (cariPch.split(" ").length - 1), jorder;
       if (spaceCount > 0) {
         jorder = `relevance desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
@@ -159,7 +164,7 @@ const handler = async (req, res) => {
       orderUrut = jorder;
       tentang = '';
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'tentang' && req.body.terx === 'All') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'tentang' && req.body.terx && req.body.terx === 'All') {
       let spaceCount = (cariPch.split(" ").length - 1), jorder;
       if (spaceCount > 0) {
         jorder = `relevance desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
@@ -170,7 +175,7 @@ const handler = async (req, res) => {
       orderUrut = jorder;
       tentang = '';
     }
-    else if (cariPch !== '' && req.body.p_lihan === 'nomor' && req.body.terx === 'All') {
+    else if (cariPch !== '' && req.body.p_lihan && req.body.p_lihan === 'nomor' && req.body.terx && req.body.terx === 'All') {
       tentangHaving = `relevance > 0`;
       orderUrut = `relevance desc, a.tahun desc, b.idjenis asc, ABS(a.no_peraturan) desc, a.idperaturan desc`;
     }
@@ -199,7 +204,14 @@ const handler = async (req, res) => {
       .havingRaw(tentangHaving)
       .orderByRaw(orderUrut)
       .timeout(1000, {cancel: true})
-      let check1 = await resulData.clone().limit(length).offset(start)
+      
+      let check1;
+      try {
+        check1 = await resulData.clone().limit(length).offset(start);
+      } catch (dbError) {
+        console.error('Database query error:', dbError);
+        return res.status(500).json({ error: 'Database query failed', details: dbError.message });
+      }
       let hslResult, allResult, liakko;
       if(check1.length > 1) {
         hslResult = check1
@@ -253,16 +265,27 @@ const handler = async (req, res) => {
           .havingRaw(tentangHaving)
           .orderByRaw(orderUrut)
           .timeout(1000, {cancel: true})
-          hslResult = await resulData.clone().limit(length).offset(start)
-          allResult = await resulData.clone()
-          liakko = 'saidebah'
+          try {
+            hslResult = await resulData.clone().limit(length).offset(start);
+            allResult = await resulData.clone();
+            liakko = 'saidebah';
+          } catch (dbError) {
+            console.error('Database query error in fallback:', dbError);
+            return res.status(500).json({ error: 'Database query failed', details: dbError.message });
+          }
       }
 
       var { arrayData, arrayData_xid, arrayData_xxid } = newFunctionArray();
       newFunctionResult(hslResult, arrayData, arrayData_xid, arrayData_xxid);
-      res.status(200)
+      res.status(200);
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({data: hslResult, id_dt: arrayData_xid, jdid: arrayData_xxid, jml: allResult.length, jn: req.body.jns}));
+      res.end(JSON.stringify({
+        data: hslResult || [], 
+        id_dt: arrayData_xid || [], 
+        jdid: arrayData_xxid || [], 
+        jml: allResult ? allResult.length : 0, 
+        jn: req.body.jns || []
+      }));
     } else {
       return res.status(404).end();
     }
@@ -280,7 +303,15 @@ function newFunctionArray() {
 }
 
 function newFunctionResult(result, arrayData, arrayData_xid, arrayData_xxid) {
+  if (!result || !Array.isArray(result)) {
+    return;
+  }
+  
   for (let item_p of result) {
+    if (!item_p || !item_p.idperaturan) {
+      continue;
+    }
+    
     let dirxxxxx = process.env.NEXT_APP_JDIH_PATH + 'uploads/'+item_p.idperaturan;
     const jmlFile = fileList(dirxxxxx);
     const arrayFile = [];
@@ -362,6 +393,10 @@ export function limitChars(qu, lm = 200){
 }
 
 export function singkatNumber(labelValue) {
+  if (labelValue === null || labelValue === undefined || isNaN(Number(labelValue))) {
+    return 0;
+  }
+  
   return Math.abs(Number(labelValue)) >= 1.0e+9
   ? Math.abs(Number(labelValue)) / 1.0e+9 + "M"
   : Math.abs(Number(labelValue)) >= 1.0e+6

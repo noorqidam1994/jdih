@@ -102,9 +102,15 @@ function Datetailputusan({ data }) {
       }
 
       function clickDetailEvent(j, n, t, tt) {
-          let noSlash = n.split('/').join('+');
-          let glr = tt.toUpperCase().split(' ').join('+').split('/').join('-');
-          router.push('/detail/'+j+'/'+noSlash+'/'+t+'/'+encodeURI(glr), undefined, { shallow: true })
+          // Add null checks and provide fallback values
+          const jenis = j || "UU";
+          const nomor = n || "1";
+          const tahun = t || "2024";
+          const tentang = tt || "Tentang Peraturan";
+          
+          let noSlash = nomor.split('/').join('+');
+          let glr = tentang.toUpperCase().split(' ').join('+').split('/').join('-');
+          router.push('/detail/'+jenis+'/'+noSlash+'/'+tahun+'/'+encodeURI(glr), undefined, { shallow: true })
         }
       
   return (
@@ -210,7 +216,7 @@ function Datetailputusan({ data }) {
               return (
                 <div className="isTeerkait" key={d.idperaturan} onClick={() => clickDetailEvent(d.jns, d.no_peraturan, d.tahun, d.tentang)}>
                   
-                  <div className="ket_isidata2">{d.jns} {d.no_peraturan.toUpperCase()}/{d.tahun}</div>
+                  <div className="ket_isidata2">{d.jns} {d.no_peraturan?.toUpperCase() || "1"}/{d.tahun}</div>
                 </div>
               ) 
               }) : (
@@ -345,14 +351,9 @@ function Datetailputusan({ data }) {
 
   export async function getServerSideProps(context) {
     const { query } = context;
-    let hdl = query.q.split('/')
-    let jnx = hdl[0].split('+').join(' ')
-    let nox = hdl[1].split('+').join('/')
-
-    const resOpt = { jns: jnx, no: nox, thn: hdl[2], k: 'isi'}
-    const response = await axiosInstance.post('/api/putusan/putusan_p', resOpt);
-    const intiData = await response.data;
-    if (intiData.data === undefined) {
+    
+    // Add validation for query.q parameter
+    if (!query.q || query.q === "undefined" || query.q.includes("undefined")) {
       return {
         redirect: {
           destination: '/putusan-pengadilan/MA',
@@ -360,7 +361,46 @@ function Datetailputusan({ data }) {
         }
       }
     }
-    const terk = intiData.data[0].terkait.replaceAll("'", "").split(',');
+    
+    let hdl = query.q.split('/')
+    
+    // Validate that we have all required parts
+    if (hdl.length < 3) {
+      return {
+        redirect: {
+          destination: '/putusan-pengadilan/MA',
+          permanent: false,
+        }
+      }
+    }
+    
+    let jnx = hdl[0] ? hdl[0].split('+').join(' ') : "MA"
+    let nox = hdl[1] ? hdl[1].split('+').join('/') : "1"
+
+    const resOpt = { jns: jnx, no: nox, thn: hdl[2] || "2024", k: 'isi'}
+    
+    let intiData;
+    try {
+      const response = await axiosInstance.post('/api/putusan/putusan_p', resOpt);
+      intiData = await response.data;
+      if (intiData.data === undefined || !intiData.data || intiData.data.length === 0) {
+        return {
+          redirect: {
+            destination: '/putusan-pengadilan/MA',
+            permanent: false,
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching putusan data:', error);
+      return {
+        redirect: {
+          destination: '/putusan-pengadilan/MA',
+          permanent: false,
+        }
+      }
+    }
+    const terk = intiData.data[0].terkait ? intiData.data[0].terkait.replaceAll("'", "").split(',') : [];
     const [valuedata, d_status] = await Promise.all([
         intiData,
         akukStatus(terk)

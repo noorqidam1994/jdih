@@ -66,10 +66,17 @@ const Peraturan = ({ data }) => {
 
   function clickDetailEvent(j, n, t, tt) {
     const atsSttLiak = document.getElementById('p_lihan').value;
-    let noSlash = n.split('/').join('+');
+    
+    // Add null checks and provide fallback values
+    const jenis = j || "UU";
+    const nomor = n || "1";
+    const tahun = t || "2024";
+    const tentang = tt || "Tentang Peraturan";
+    
+    let noSlash = nomor.split('/').join('+');
     cookiee.set("stsstt", atsSttLiak, { secure: true, expires: 7, path: '/' });
-    let glr = tt.toUpperCase().split(' ').join('+').split('/').join('-');
-    router.push('/detail/'+j+'/'+noSlash+'/'+t+'/'+encodeURI(glr), undefined, { shallow: true })
+    let glr = tentang.toUpperCase().split(' ').join('+').split('/').join('-');
+    router.push('/detail/'+jenis+'/'+noSlash+'/'+tahun+'/'+encodeURI(glr), undefined, { shallow: true })
   }
 
   const handleClickInsideMenu = e => {
@@ -515,12 +522,17 @@ const handleClicklbhjenis = async (x) => {
 }
 
 export async function getJenis(Lmt) {
-  const response = await axiosInstance.get('/api/hukumproduk/jenis?lmt='+Lmt);
-  if(response.status === 500) {
-    return { result: {data: '', jml: ''}}
-  } else {
-    const resx = response.data
-    return { result: resx}
+  try {
+    const response = await axiosInstance.get('/api/hukumproduk/jenis?lmt='+Lmt);
+    if(response.status === 500) {
+      return { result: {data: [], jml: 0}}
+    } else {
+      const resx = response.data
+      return { result: resx}
+    }
+  } catch (error) {
+    console.error('Error fetching jenis:', error);
+    return { result: {data: [], jml: 0}}
   }
 }
 
@@ -534,11 +546,16 @@ export async function cariJenis(qu) {
 }
 
 export async function getTahun(Lmt) {
-  const response = await axiosInstance.get('/api/hukumproduk/tahun?lmt='+Lmt)
-  if(response.status === 500) {
-    return { result: {data: '', jml: ''}}
-  } else {
-    return { result: await response.data}
+  try {
+    const response = await axiosInstance.get('/api/hukumproduk/tahun?lmt='+Lmt)
+    if(response.status === 500) {
+      return { result: {data: [], jml: 0}}
+    } else {
+      return { result: await response.data}
+    }
+  } catch (error) {
+    console.error('Error fetching tahun:', error);
+    return { result: {data: [], jml: 0}}
   }
 }
 
@@ -552,45 +569,51 @@ export async function cariTahun(qu) {
 }
 
 export async function getPeraturan(plh, loc, srh, crnPg, lmtDt, checkJ, checkT, sttx) {
-    let tentang = srh, 
-        p_lihan = plh,
-        jns = checkJ, 
-        thn = checkT, 
-        status = sttx, 
-        terx = loc, 
-        length = lmtDt, 
-        start = (crnPg - 1) * lmtDt;
-        
-        const resOpt = { 
-          tentang: tentang, 
-          p_lihan: p_lihan, 
-          jns: jns, 
-          thn: thn, 
-          status: status, 
-          terx: terx, 
-          length: length, 
-          start: start
+    try {
+        let tentang = srh, 
+            p_lihan = plh,
+            jns = checkJ, 
+            thn = checkT, 
+            status = sttx, 
+            terx = loc, 
+            length = lmtDt, 
+            start = (crnPg - 1) * lmtDt;
+            
+            const resOpt = { 
+              tentang: tentang, 
+              p_lihan: p_lihan, 
+              jns: jns, 
+              thn: thn, 
+              status: status, 
+              terx: terx, 
+              length: length, 
+              start: start
+            }
+        const res_p = await axiosInstance.post('/api/hukumproduk/produkhukum', resOpt);
+        if(res_p.status === 500) {
+          return { result: {data: [], jml: 0}}
+        } else {
+          const resx = await res_p.data
+          return { result: resx}
         }
-    const res_p = await axiosInstance.post('/api/hukumproduk/produkhukum', resOpt);
-    if(res_p.status === 500) {
-      return { result: {data: '', jml: ''}}
-    } else {
-      const resx = await res_p.data
-      return { result: resx}
+    } catch (error) {
+        console.error('Error fetching peraturan:', error);
+        return { result: {data: [], jml: 0}}
     }
 }
 
 export async function getServerSideProps(context) {
-  const { query } = context;
-  let isiSearch, akukKhia;
-  if(query.q === 'All' || query.q === 'Terbaru' || query.q === 'Terpopuler') {
-    isiSearch = '';
-    akukKhia = '';
-  } else {
-    let isiData = query.q.split('/');
-    isiSearch = isiData[1].split('+').join(' ').split('#').join('');
-    akukKhia = isiData[0].split('#').join('');
-  }
+  try {
+    const { query } = context;
+    let isiSearch, akukKhia;
+    if(query.q === 'All' || query.q === 'Terbaru' || query.q === 'Terpopuler') {
+      isiSearch = '';
+      akukKhia = '';
+    } else {
+      let isiData = query.q.split('/');
+      isiSearch = isiData[1] ? isiData[1].split('+').join(' ').split('#').join('') : '';
+      akukKhia = isiData[0] ? isiData[0].split('#').join('') : '';
+    }
   let jnsxx, thnxx, jnsxxPush = [], thnxxPush = [], sttxx, sttAtas, jns_unyinx = [], thn_unyinx = [], totalDjenis, totalDtahun, pagexx;
   if (context.req.headers.cookie !== undefined) {
   const prse = cookie.parse(context.req.headers.cookie)
@@ -658,8 +681,8 @@ export async function getServerSideProps(context) {
     jml_j = totalDjenis
   } else {
     const dataJenisJml = await getJenis(0)
-    dataJenis = dataJenisJml.result.data
-    jml_j = dataJenisJml.result.jml
+    dataJenis = dataJenisJml.result?.data || []
+    jml_j = dataJenisJml.result?.jml || 0
   }
 
   if (thn_unyinx.length > 1) {
@@ -667,11 +690,11 @@ export async function getServerSideProps(context) {
     jml_t = totalDtahun
   } else {
     const dataTahunJml = await getTahun(0)
-    dataTahun = dataTahunJml.result.data
-    jml_t = dataTahunJml.result.jml
+    dataTahun = dataTahunJml.result?.data || []
+    jml_t = dataTahunJml.result?.jml || 0
   }
 
-  if (dataJenis === undefined) {
+  if (!dataJenis || dataJenis.length === 0) {
     return {
       redirect: {
         destination: '/produk-hukum/All',
@@ -684,7 +707,20 @@ export async function getServerSideProps(context) {
     isiSearch,
     getPeraturan(sttAtas, akukKhia, isiSearch, pagexx, 10, jnsxx, thnxx, sttxx)
   ]);
-  return { props: { data: { srchx, peraturans, dataJenis, jml_j, dataTahun, jml_t, jnsxx, thnxx, sttxx, sttAtas, pagexx } } };
+  
+  // Ensure peraturans has valid data
+  const validPeraturans = peraturans?.result || { data: [], jml: 0 };
+  
+  return { props: { data: { srchx, peraturans: validPeraturans, dataJenis, jml_j, dataTahun, jml_t, jnsxx, thnxx, sttxx, sttAtas, pagexx } } };
+  } catch (error) {
+    console.error('Error in getServerSideProps:', error);
+    return {
+      redirect: {
+        destination: '/produk-hukum/All',
+        permanent: false,
+      }
+    };
+  }
 }
 
 export default Peraturan
