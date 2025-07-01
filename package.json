@@ -1,0 +1,31 @@
+{
+  "name": "jdih-kemensetneg",
+  "version": "1.0.0",
+  "description": "JDIH (Jaringan Dokumentasi dan Informasi Hukum) - Legal Information System for Indonesian Ministry of State Secretariat",
+  "main": "src/server.js",
+  "scripts": {
+    "setup": "./setup.sh",
+    "dev": "cd src && npm run dev",
+    "build": "cd src && npm run build",
+    "start": "cd src && npm run start",
+    "install-deps": "cd src && npm install",
+    "docker-build": "docker build -t jdih-app .",
+    "docker-run": "docker run -p 3000:3000 jdih-app",
+    "docker-compose": "docker-compose up --build"
+  },
+  "keywords": [
+    "jdih",
+    "legal",
+    "documents",
+    "indonesia",
+    "nextjs",
+    "express",
+    "mysql"
+  ],
+  "author": "Ministry of State Secretariat",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+} 

@@ -7,18 +7,26 @@ am4core.useTheme(am4themes_animated);
 
 const Matrikchart = ({ dchart }) => {
     let MatriksArray = [];
-    dchart.readDatatable.map( (data, index) => {
-      let arr = {};
-        dchart.headtable.map( (dx, kx) => {
-          data.value.map((item, i) => {
-              if(dx.idjenis === item.idjenis) {
-                arr['year'] = item.tahun
-                arr[dx.jns] = item.jml
+    
+    // Add null checks to prevent errors
+    if (dchart && dchart.readDatatable && Array.isArray(dchart.readDatatable)) {
+        dchart.readDatatable.map( (data, index) => {
+          let arr = {};
+          if (dchart.headtable && Array.isArray(dchart.headtable)) {
+            dchart.headtable.map( (dx, kx) => {
+              if (data.value && Array.isArray(data.value)) {
+                data.value.map((item, i) => {
+                    if(dx.idjenis === item.idjenis) {
+                      arr['year'] = item.tahun
+                      arr[dx.jns] = item.jml
+                    }
+                  })
               }
             })
-        })
-        MatriksArray.push(arr);
-    });
+          }
+          MatriksArray.push(arr);
+        });
+    }
     //const sortArr = MatriksArray.sort((a,b) => a.year - b.year);
     const sorter = (a, b) => {
       if(a.year !== b.year){
@@ -67,9 +75,11 @@ const Matrikchart = ({ dchart }) => {
           
           return series;
         }
-        dchart.headtable.map( (d, k) => {
-        createSeries(d.jns, d.jns);
-        })
+        if (dchart.headtable && Array.isArray(dchart.headtable)) {
+            dchart.headtable.map( (d, k) => {
+            createSeries(d.jns, d.jns);
+            })
+        }
         // Legend
         chart.legend = new am4charts.Legend();
 

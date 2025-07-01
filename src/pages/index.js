@@ -37,8 +37,8 @@ const index = ({ data }) => {
 
   console.log(data);
   useEffect(() => {
-    data.isidatagaleri[0].img.forEach(function (i) {
-      listImages(i.file, data.isidatagaleri[0].id, i.ext);
+    data?.isidatagaleri[0]?.img?.forEach(function (i) {
+      listImages(i.file, data?.isidatagaleri[0]?.id, i.ext);
     });
   }, []);
 
@@ -93,8 +93,8 @@ const index = ({ data }) => {
   };
 
   function clickDetailEvent(j, n, t, tt) {
-    let noSlash = n.split("/").join("+");
-    let glr = tt.toUpperCase().split(" ").join("+").split("/").join("-");
+    let noSlash = n?.split("/").join("+");
+    let glr = tt?.toUpperCase().split(" ").join("+").split("/").join("-");
 
     cookiee.set("akuksearch", "", { secure: true, expires: 7, path: "/" });
     cookiee.set("stsstt", "Semua", { secure: true, expires: 7, path: "/" });
@@ -224,7 +224,7 @@ const index = ({ data }) => {
                                 NOMOR {d.no_peraturan} TAHUN {d.tahun}
                               </p>
                               <p className="group inner list-group-item-text d4">
-                                {d.tentang.toLowerCase()}
+                                {d.tentang?.toLowerCase()}
                               </p>
                             </Link>
                           </div>
@@ -356,10 +356,10 @@ const index = ({ data }) => {
                             className="view overlay"
                             id="photos"
                             onClick={() =>
-                              clickDetailEventgaleri(data.isidatagaleri[0].id)
+                              clickDetailEventgaleri(data.isidatagaleri[0]?.id)
                             }
                           >
-                            <div id={data.isidatagaleri[0].id}></div>
+                            <div id={data.isidatagaleri[0]?.id}></div>
                             <a href="#" onClick={(e) => e.preventDefault()}>
                               <div className="mask rgba-white-slight waves-effect waves-light"></div>
                             </a>
@@ -369,12 +369,12 @@ const index = ({ data }) => {
                             style={{ background: "#e3e7e7" }}
                           >
                             <h6 className="card-title text-center mb-0">
-                              {data.isidatagaleri[0].judul}
+                              {data?.isidatagaleri[0]?.judul}
                             </h6>
                           </div>
                           <div className="rounded-bottom mdb-color lighten-3 text-center text-white numbersxx">
                             <i className="far fa-clock pr-1"></i>
-                            {moment(data.isidatagaleri[0].tgl).format("LLL")}
+                            {moment(data?.isidatagaleri[0]?.tgl).format("LLL")}
                           </div>
                         </div>
                       </div>
@@ -390,16 +390,16 @@ const index = ({ data }) => {
                               <p
                                 id="judul"
                                 className="line-clamp line-clamp-6"
-                                title={data.isiebook.data[0].judul}
+                                title={data.isiebook.data[0]?.judul}
                               >
-                                {data.isiebook.data[0].judul}
+                                {data.isiebook.data[0]?.judul}
                               </p>
                               <div className="ket">
                                 <i
                                   className="fas fa-search"
                                   aria-hidden="true"
                                 ></i>{" "}
-                                {data.isiebook.data[0].lihat}{" "}
+                                {data.isiebook.data[0]?.lihat}{" "}
                                 <span id="ket_jrk">Dilihat</span>
                               </div>
                               <div className="ket">
@@ -407,7 +407,7 @@ const index = ({ data }) => {
                                   className="fas fa-download"
                                   aria-hidden="true"
                                 ></i>{" "}
-                                {data.isiebook.data[0].unduh}{" "}
+                                {data.isiebook.data[0]?.unduh}{" "}
                                 <span id="ket_jrk">Diunduh</span>
                               </div>
                               <div className="ket">
@@ -415,16 +415,16 @@ const index = ({ data }) => {
                                   className="fas fa-file"
                                   aria-hidden="true"
                                 ></i>{" "}
-                                {data.isiebook.data[0].page}{" "}
+                                {data.isiebook.data[0]?.page}{" "}
                                 <span id="ket_jrk">Page</span>
                               </div>
                               <div
                                 className="view_icn"
                                 onClick={() =>
                                   handleClickView(
-                                    data.isiebook.data[0].idebook,
-                                    data.isiebook.data[0].file_jj[0],
-                                    data.isiebook.data[0].lihat
+                                    data.isiebook.data[0]?.idebook,
+                                    data.isiebook.data[0]?.file_jj[0],
+                                    data.isiebook.data[0]?.lihat
                                   )
                                 }
                               >
@@ -467,11 +467,11 @@ export async function getTahunPeraturan(arrID) {
   };
   const res_p = await axiosInstance.post("/api/hukumproduk/apimatriks", resOpt);
   if (res_p.status === 500) {
-    return { result: { data: [] } };
+    return { result: [] };
   } else {
     const isi = await res_p.data;
-    let jdisi;
-    if (isi.data !== undefined || isi.data.length > 0) {
+    let jdisi = [];
+    if (isi.data !== undefined && isi.data && isi.data.length > 0) {
       const groupedMap = isi.data.reduce(
         (entryMap, e) =>
           entryMap.set(e.tahun, [...(entryMap.get(e.tahun) || []), e]),
@@ -479,7 +479,7 @@ export async function getTahunPeraturan(arrID) {
       );
       jdisi = Array.from(groupedMap).map(([name, value]) => ({ name, value }));
     }
-    let limitData = jdisi.slice(0, 20);
+    let limitData = jdisi ? jdisi.slice(0, 20) : [];
     return { result: limitData };
   }
 }
@@ -524,38 +524,64 @@ export async function getPeraturan(
 }
 
 export async function getServerSideProps(context) {
-  const arrID = [];
-  const resOpt = {
-    ket: "hadap",
-  };
+  try {
+    const arrID = [];
+    const resOpt = {
+      ket: "hadap",
+    };
 
-  const response = await axiosInstance.post(
-    "/api/hukumproduk/apimatriks",
-    resOpt
-  );
-  const atsHead = await response.data;
+    const response = await axiosInstance.post(
+      "/api/hukumproduk/apimatriks",
+      resOpt
+    );
+    const atsHead = await response.data;
 
-  for (let item of atsHead.data) {
-    arrID.push(item.idjenis);
+    for (let item of atsHead.data || []) {
+      arrID.push(item.idjenis);
+    }
+
+    const resgaleri = await axiosInstance.post("/api/galeri/data_glr", {
+      ket: "",
+    });
+    const isidatagaleri = await resgaleri.data;
+
+    const res_p = await axiosInstance.post("/api/ebook/listebook", { k: "" });
+    const isiebook = await res_p.data;
+
+    const isiTable = await getTahunPeraturan(arrID);
+    const [terbaru] = await Promise.all([
+      getPeraturan("semua", "Terbaru", "", 1, 9, "", "", ""),
+    ]);
+    
+    // Ensure all data is serializable by providing fallbacks
+    const data = {
+      terbaru: terbaru || { data: [], jml: 0 },
+      atsHead: atsHead || { data: [] },
+      isiTable: isiTable || { result: [] },
+      isidatagaleri: isidatagaleri || [],
+      isiebook: isiebook || { data: [] }
+    };
+
+    return {
+      props: {
+        data: data,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getServerSideProps:', error);
+    // Return fallback data if there's an error
+    return {
+      props: {
+        data: {
+          terbaru: { data: [], jml: 0 },
+          atsHead: { data: [] },
+          isiTable: { result: [] },
+          isidatagaleri: [],
+          isiebook: { data: [] }
+        },
+      },
+    };
   }
-
-  const resgaleri = await axiosInstance.post("/api/galeri/data_glr", {
-    ket: "",
-  });
-  const isidatagaleri = await resgaleri.data;
-
-  const res_p = await axiosInstance.post("/api/ebook/listebook", { k: "" });
-  const isiebook = await res_p.data;
-
-  const isiTable = await getTahunPeraturan(arrID);
-  const [terbaru] = await Promise.all([
-    getPeraturan("semua", "Terbaru", "", 1, 9, "", "", ""),
-  ]);
-  return {
-    props: {
-      data: { terbaru, atsHead, isiTable, isidatagaleri, isiebook } || null,
-    },
-  };
 }
 
 export default index;

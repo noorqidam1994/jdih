@@ -4,7 +4,6 @@ require("dotenv").config();
 const isProd = process.env.NODE_ENV === "production";
 
 module.exports = {
-  future: { webpack5: false },
   reactStrictMode: true,
   assetPrefix: isProd ? process.env.NEXT_APP_DOMAIN : "",
   pageExtensions: ["js"],
