@@ -1455,8 +1455,30 @@ export async function getServerSideProps(context) {
   const { query } = context;
   const ua = useUserAgent(context.req.headers["user-agent"]);
   let cooKiesId = Math.random().toString(36).substr(2, 5);
+  
+  // Add validation for query.q parameter
+  if (!query.q || query.q === "undefined" || query.q.includes("undefined")) {
+    return {
+      redirect: {
+        destination: "/produk-hukum/All",
+        permanent: false,
+      },
+    };
+  }
+  
   let hdl = query.q.split("/");
-  let nox = hdl[1].split("+").join("/");
+  
+  // Validate that we have all required parts
+  if (hdl.length < 3) {
+    return {
+      redirect: {
+        destination: "/produk-hukum/All",
+        permanent: false,
+      },
+    };
+  }
+  
+  let nox = hdl[1] ? hdl[1].split("+").join("/") : "1";
   let isiSearch = "",
     isiSelect = "semua";
   let ipAddres, city, region, country;
@@ -1485,18 +1507,29 @@ export async function getServerSideProps(context) {
   }
 
   const resOpt = {
-    jns: hdl[0],
+    jns: hdl[0] || "UU",
     no: nox,
-    thn: hdl[2],
+    thn: hdl[2] || "2024",
     k: "",
   };
 
-  const response = await axiosInstance.post(
-    "/api/hukumproduk/detaildata",
-    resOpt
-  );
-  const intiData = await response.data;
-  if (intiData.row === undefined) {
+  let intiData;
+  try {
+    const response = await axiosInstance.post(
+      "/api/hukumproduk/detaildata",
+      resOpt
+    );
+    intiData = await response.data;
+    if (intiData.row === undefined || !intiData.row || intiData.row.length === 0) {
+      return {
+        redirect: {
+          destination: "/produk-hukum/All",
+          permanent: false,
+        },
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching detail data:', error);
     return {
       redirect: {
         destination: "/produk-hukum/All",

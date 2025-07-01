@@ -93,13 +93,19 @@ const index = ({ data }) => {
   };
 
   function clickDetailEvent(j, n, t, tt) {
-    let noSlash = n?.split("/").join("+");
-    let glr = tt?.toUpperCase().split(" ").join("+").split("/").join("-");
+    // Add null checks and provide fallback values
+    const jenis = j || "UU";
+    const nomor = n || "1";
+    const tahun = t || "2024";
+    const tentang = tt || "Tentang Peraturan";
+    
+    let noSlash = nomor.split("/").join("+");
+    let glr = tentang.toUpperCase().split(" ").join("+").split("/").join("-");
 
     cookiee.set("akuksearch", "", { secure: true, expires: 7, path: "/" });
     cookiee.set("stsstt", "Semua", { secure: true, expires: 7, path: "/" });
 
-    return `/detail/${j}/${noSlash}/${t}/${glr}`;
+    return `/detail/${jenis}/${noSlash}/${tahun}/${glr}`;
   }
 
   function listImages(f, fl, ext, img1) {
